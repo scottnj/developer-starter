@@ -1,0 +1,14 @@
+[emr_nav_menu_dropdown="opened"] {
+    [emr_element="nav_menu_dropdown_button"] {
+    }
+    [emr_element="nav_menu_dropdown_content"] {
+        display: block;
+    }
+}
+[emr_nav_menu_dropdown="closed"] {
+     [emr_element="nav_menu_dropdown_button"] {
+     }
+     [emr_element="nav_menu_dropdown_content"] {
+         display: none;
+     }
+ }

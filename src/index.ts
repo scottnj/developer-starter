@@ -1,7 +1,8 @@
-import { greetUser } from '$utils/greet';
+import './index.css';
+
+import { initNavDropdowns } from './nav-dropdowns';
 
 window.Webflow ||= [];
 window.Webflow.push(() => {
-  const name = 'John Doe';
-  greetUser(name);
+  initNavDropdowns();
 });
