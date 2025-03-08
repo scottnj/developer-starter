@@ -1,84 +1,77 @@
-// https://www.a11y-collective.com/blog/mastering-web-accessibility-making-drop-down-menus-user-friendly/
+/*
+ * Refactored version of
+ * https://www.a11y-collective.com/blog/mastering-web-accessibility-making-drop-down-menus-user-friendly/
+ */
 
-// TODO: Add awareness of when a user tabs out of the menu
-// TODO: debounce mouse over
-// TODO: Accessible drop-down menus for touchscreen users
+import { initKeyboardNavigation } from './keyboard-navigation';
+import { initMouseClicks } from './mouse-clicks';
+import { initMouseOver } from './mouse-hover';
 
-let expandedItem: Element | null = null;
+export type Dropdown = {
+  wrapper: HTMLElement;
+  trigger: HTMLElement;
+  subMenu: HTMLElement;
+};
 
-function openDropdown(dropdown: Element) {
-  if (expandedItem) closeDropdown(expandedItem);
-  const { button, content } = getDropdownButtonAndContent(dropdown);
-  dropdown.setAttribute('emr_nav_menu_dropdown', 'opened');
-  button.setAttribute('aria-expanded', 'true');
-  content.setAttribute('aria-hidden', 'false');
-  content.querySelectorAll('a')[0].focus(); // Focus on the first link in the submenu
-  expandedItem = dropdown;
+let _expandedItem: Dropdown | null = null;
+
+export function expandedItem() {
+  return _expandedItem;
 }
 
-function closeDropdown(dropdown: Element) {
-  const { button, content } = getDropdownButtonAndContent(dropdown);
-  dropdown.setAttribute('emr_nav_menu_dropdown', 'closed');
-  button.setAttribute('aria-expanded', 'false');
-  content.setAttribute('aria-hidden', 'true');
-  button.focus(); // Focus back on the button
-  expandedItem = null;
+export function openDropdown(dropdown: Dropdown) {
+  // only allows one dropdown to be expanded at a time
+  if (_expandedItem) closeDropdown(_expandedItem, true);
+
+  dropdown.wrapper.setAttribute('emr_nav_menu_dropdown', 'opened');
+  dropdown.trigger.setAttribute('aria-expanded', 'true');
+  dropdown.subMenu.removeAttribute('inert');
+  dropdown.subMenu.querySelectorAll('a')[0].focus(); // Focus on the first link in the submenu
+  _expandedItem = dropdown;
 }
 
-function getDropdownButtonAndContent(dropdown: Element) {
-  const button = dropdown.querySelector(
-    '[emr_element="nav_menu_dropdown_button"]'
-  ) as HTMLButtonElement;
-  const content = dropdown.querySelector(
-    '[emr_element="nav_menu_dropdown_content"]'
-  ) as HTMLDivElement;
-  return { button, content };
+export function closeDropdown(dropdown: Dropdown, skipFocus: boolean = false) {
+  if (!skipFocus) dropdown.trigger.focus(); // Focus back on the button
+  dropdown.wrapper.setAttribute('emr_nav_menu_dropdown', 'closed');
+  dropdown.trigger.setAttribute('aria-expanded', 'false');
+  dropdown.subMenu.setAttribute('inert', 'true');
+  _expandedItem = null;
 }
 
-function onDropdownClick(dropdown: Element) {
-  if (expandedItem === dropdown) closeDropdown(dropdown);
-  else openDropdown(dropdown);
+export function toggleDropdown(dropdown: Dropdown) {
+  if (_expandedItem === dropdown) {
+    closeDropdown(dropdown);
+  } else {
+    openDropdown(dropdown);
+  }
 }
 
-export function initNavDropdowns() {
-  document.querySelectorAll('[emr_nav_menu_dropdown]').forEach((dropdown) => {
-    const { button } = getDropdownButtonAndContent(dropdown);
+export function initNavDropdowns({
+  dropDownSelector = '[emr_nav_menu_dropdown]',
+  triggerSelector = '[emr_element="nav_menu_dropdown_button"]',
+  subMenuSelector = '[emr_element="nav_menu_dropdown_content"]',
+  hoverDelay = 300,
+}: {
+  dropDownSelector: string;
+  triggerSelector: string;
+  subMenuSelector: string;
+  hoverDelay: number;
+}) {
+  document.querySelectorAll(dropDownSelector).forEach((wrapper) => {
+    const trigger = wrapper.querySelector(triggerSelector) as HTMLElement;
+    const subMenu = wrapper.querySelector(subMenuSelector) as HTMLElement;
+    const dropdown: Dropdown = { wrapper: wrapper as HTMLElement, trigger, subMenu };
 
-    button.addEventListener('click', () => {
-      onDropdownClick(dropdown);
-    });
+    // initialize aria attributes
+    closeDropdown(dropdown, true);
 
-    button.addEventListener('mouseenter', () => {
-      openDropdown(dropdown);
-    });
+    // init mouse clicks
+    initMouseClicks(dropdown);
 
-    button.addEventListener('mouseleave', () => {
-      closeDropdown(dropdown);
-    });
+    // init mouse over
+    initMouseOver(dropdown, hoverDelay);
 
-    // Handling keyboard navigation
-    button.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        // Space or Enter key
-        event.preventDefault(); // Prevent the default action to stop scrolling when pressing Space
-        if (button.ariaExpanded === 'false') {
-          openDropdown(dropdown);
-        } else {
-          closeDropdown(dropdown);
-        }
-      }
-    });
-
-    // Handling tab key inside submenu to loop back to the button
-    const subMenuLinks = dropdown.querySelectorAll('a');
-    if (subMenuLinks.length) {
-      const lastLink = subMenuLinks[subMenuLinks.length - 1];
-      lastLink.addEventListener('keydown', (event) => {
-        if (event.key === 'Tab' && !event.shiftKey) {
-          event.preventDefault();
-          button.focus(); // Move focus back to the button
-        }
-      });
-    }
+    // init keyboard navigation
+    initKeyboardNavigation(dropdown);
   });
 }

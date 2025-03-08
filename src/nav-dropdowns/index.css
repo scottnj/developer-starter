@@ -1,14 +1,25 @@
-[emr_nav_menu_dropdown="opened"] {
-    [emr_element="nav_menu_dropdown_button"] {
+[emr_nav_menu_dropdown] {
+    [emr_element="nav_menu_dropdown_button"] .nav_menu_dropdown_button-icon {
+        transition: all 600ms ease-in-out;
     }
     [emr_element="nav_menu_dropdown_content"] {
+        transition: all 300ms ease-in-out;
+        transform-origin: top left;
         display: block;
     }
 }
-[emr_nav_menu_dropdown="closed"] {
-     [emr_element="nav_menu_dropdown_button"] {
+
+[emr_nav_menu_dropdown="opened"] {
+     [emr_element="nav_menu_dropdown_button"] .nav_menu_dropdown_button-icon {
+         rotate: -180deg;
      }
      [emr_element="nav_menu_dropdown_content"] {
-         display: none;
+         transform: scaleY(100%);
+     }
+ }
+
+[emr_nav_menu_dropdown="closed"] {
+     [emr_element="nav_menu_dropdown_content"] {
+         transform: scaleY(0%);
      }
  }
